@@ -5,7 +5,8 @@ Reference Implementations of Not-Quite-Transcendental Functions
 
 ## Introduction
 
-This is the companion repository for arXiv:xxxx.xxxx. Here we present
+This is the companion repository for [ArXiv:2206.08957](https://arxiv.org/abs/2206.08957). 
+Here we present
 the reference impementations for not-quite-transendental functions as
 well as machinery to time them. For completeness, we also include the
 paper in TeX in the paper subdirectory. The logarithms are in
