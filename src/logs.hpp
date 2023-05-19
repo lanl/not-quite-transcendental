@@ -118,7 +118,7 @@ double sinh(const double x) {
   constexpr double IE = 1.0/M_E;
   constexpr double LG2 = 1.4426950408889634074;
   const double a2x = 2*std::abs(x);
-  const bool mask = (a2x < M_E);
+  const double mask = (a2x < M_E); // to make expr below single type
   return mask * a2x*IE + !mask*LG2*sgn(x)*lg(a2x);
 }
 
@@ -126,7 +126,7 @@ KOKKOS_FORCEINLINE_FUNCTION
 double asinh(const double x) {
   constexpr double LG2 = 1.4426950408889634074;
   const double ax = std::abs(x);
-  const bool mask = (ax < 1.0);
+  const double mask = (ax < 1.0);
   return mask * 0.5*M_E*x + !mask*0.5*sgn(x)*pow2(LG2*ax);
 }
 
