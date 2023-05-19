@@ -108,18 +108,12 @@ double pow10(const double x) {
 }
 
 KOKKOS_FORCEINLINE_FUNCTION
-double tanh(const double x) {
-  const double expx = exp(2 * x);
-  return (expx - 1) / (expx + 1);
-}
-
-KOKKOS_FORCEINLINE_FUNCTION
 double sinh(const double x) {
   constexpr double IE = 1.0/M_E;
   constexpr double LG2 = 1.4426950408889634074;
   const double a2x = 2*std::abs(x);
   const double mask = (a2x < M_E); // to make expr below single type
-  return mask * a2x*IE + !mask*LG2*sgn(x)*lg(a2x);
+  return mask * a2x*IE + (1.-mask)*LG2*sgn(x)*lg(a2x);
 }
 
 KOKKOS_FORCEINLINE_FUNCTION
@@ -127,7 +121,7 @@ double asinh(const double x) {
   constexpr double LG2 = 1.4426950408889634074;
   const double ax = std::abs(x);
   const double mask = (ax < 1.0);
-  return mask * 0.5*M_E*x + !mask*0.5*sgn(x)*pow2(LG2*ax);
+  return mask * 0.5*M_E*x + (1.-mask)*0.5*sgn(x)*pow2(LG2*ax);
 }
 
 } // namespace FastMath
