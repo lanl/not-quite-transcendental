@@ -1,0 +1,11 @@
+Invertibility of log10 (smaller is better):
+	stdlib: 2.36118133500395e-17
+	fast:   1.12864614065826e-16
+Timings for pow10:
+	stdlib: 3.06273237000000e+01 (ns/point)
+	fast:   1.39488434600000e+01 (ns/point)
+	ratio:  2.19568911127489e+00
+Timings for log10:
+	stdlib: 1.71889701700000e+01 (ns/point)
+	fast:   1.10359103400000e+01 (ns/point)
+	ratio:  1.55754891444687e+00
