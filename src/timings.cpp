@@ -124,6 +124,7 @@ int main(int argc, char *argv[]) {
            std_diff / static_cast<double>(NPOINTS),
            fast_diff / static_cast<double>(NPOINTS));
 
+    /*
     // tanh
     auto dt_std_tanh = TimeKernel(
         "std::tanh", NPOINTS, KOKKOS_LAMBDA(const int i) {
@@ -133,6 +134,7 @@ int main(int argc, char *argv[]) {
         "fast::tanh", NPOINTS, KOKKOS_LAMBDA(const int i) {
 	  scratch[i] = FastMath::tanh(lx[i]);
         });
+    */
 
     // Report
     printf("Timings for pow10:\n"
@@ -142,20 +144,21 @@ int main(int argc, char *argv[]) {
            "Timings for log10:\n"
            "\tstdlib: %.14e (ns/point)\n"
            "\tfast:   %.14e (ns/point)\n"
-           "\tratio:  %.14e\n"
-           "Timings for tanh:\n"
-           "\tstdlib: %.14e (ns/point)\n"
-           "\tfast:   %.14e (ns/point)\n"
            "\tratio:  %.14e\n",
+           // "Timings for tanh:\n"
+           // "\tstdlib: %.14e (ns/point)\n"
+           // "\tfast:   %.14e (ns/point)\n"
+           // "\tratio:  %.14e\n",
            dt_std_exp10.count() / static_cast<double>(NPOINTS * NTRIALS),
            dt_fast_exp10.count() / static_cast<double>(NPOINTS * NTRIALS),
            dt_std_exp10.count() / static_cast<double>(dt_fast_exp10.count()),
            dt_std_log10.count() / static_cast<double>(NPOINTS * NTRIALS),
            dt_fast_log10.count() / static_cast<double>(NPOINTS * NTRIALS),
-           dt_std_log10.count() / static_cast<double>(dt_fast_log10.count()),
-           dt_std_tanh.count() / static_cast<double>(NPOINTS * NTRIALS),
-           dt_fast_tanh.count() / static_cast<double>(NPOINTS * NTRIALS),
-           dt_std_tanh.count() / static_cast<double>(dt_fast_tanh.count()));
+           dt_std_log10.count() / static_cast<double>(dt_fast_log10.count())
+           );
+           // dt_std_tanh.count() / static_cast<double>(NPOINTS * NTRIALS),
+           // dt_fast_tanh.count() / static_cast<double>(NPOINTS * NTRIALS),
+           // dt_std_tanh.count() / static_cast<double>(dt_fast_tanh.count()));
   }
   Kokkos::finalize();
 

@@ -1,0 +1,41 @@
+# NQT Timings in zone-cycles/s
+
+## AMD Ryzen 9 5900X (8 c/16 t, GCC)
+Normal: 7.4498483e4
+O1 NQT: 9.032512e4
+O2 NQT: 8.319405e4
+
+## Intel Xeon Plat 8280 (56 c, Intel)
+Normal: 4.807172e5
+O1 NQT: 6.879184e5
+O2 NQT: 5.632536e5
+
+## AMD EPYC 7763 (64 c/128 t, GCC)
+Normal: 4.853095e5
+O1 NQT: 5.589456e5
+O2 NQT: 5.374358e5
+
+## Nvidia Grace ARM (144 c, Nvidia)
+Normal: 2.768522e6
+O1 NQT: 3.504021e6
+O2 NQT: 3.219781e6
+
+## Nvidia RTX 3070 (laptop) (CUDA)
+Normal: 4.742349e5
+O1 NQT: 6.613167e5
+O2 NQT: 6.214002e5
+
+## Nvidia A100 (CUDA)
+Normal: 5.534464e6
+O1 NQT: 6.634368e6
+O2 NQT: 6.113374e6
+
+## Nvidia H200 (CUDA)
+Normal: 1.135425e7
+O1 NQT: 1.400890e7
+O2 NQT: 1.308463e7
+
+## AMD MI250X (ROCm)
+Normal: 2.730176e6
+O1 NQT: 2.865760e6
+O2 NQT: 2.84003e6
