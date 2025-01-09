@@ -5,7 +5,7 @@ Normal: 7.4498483e4
 O1 NQT: 9.032512e4
 O2 NQT: 8.319405e4
 
-## Intel Xeon Plat 8280 (56 c, Intel)
+## Intel Xeon Platinum 8280 (56 c, Intel)
 Normal: 4.807172e5
 O1 NQT: 6.879184e5
 O2 NQT: 5.632536e5
@@ -30,7 +30,7 @@ Normal: 5.534464e6
 O1 NQT: 6.634368e6
 O2 NQT: 6.113374e6
 
-## Nvidia H200 (CUDA)
+## Nvidia GH200 (CUDA)
 Normal: 1.135425e7
 O1 NQT: 1.400890e7
 O2 NQT: 1.308463e7
