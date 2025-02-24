@@ -66,8 +66,6 @@
 
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{braket}
-\usepackage{caption}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{tikz}
@@ -196,12 +194,25 @@ The transformation invoked need not be exactly logarithmic, however. The importa
 \end{eqnarray}
 for some constant $k$ and that \textbf{(b)} it is exactly invertible. Exact invertibility is required to effectively transform in and out of the space when performing interpolation. Relation \eqref{approx:log:spacing} is required so that the a uniform spacing in $x'$ captures the range of scales in $x$. 
 
-\begin{figure*}[t!]
+\begin{nolinenumbers}
+\begin{figure*}[t]
     \centering
     \includegraphics[width=0.95\linewidth]{figures/nqt_convergence.png}
-    \caption{Linear interpolation of a synthetic function $P = 1 + \rho + K_1 \rho^\Gamma_1 + K_2 \rho^\Gamma_2$ on a true log grid (left), first-order NQT grid (center), and second-order NQT grid (right). The x-axis is $\rho$ and the y-axis is the relative error in $P$. On average (in the $L_1$ sense), all interpolants converge at second order, but error spikes near the control points of the NQT gridding converge more slowly. The result is that first-order NQT converges at second order in the $L_1$ norm but slower in the $L_p$ norm for $p>1$. In second-order NQT the spikes also converge at second-order, recovering second-order convergence in higher $p$ $L_p$ norms. In all three figures, a dashed horizontal line shows the expected magnitude for second-order convergence.}
+    \caption{Linear interpolation of synthetic function
+    \eqref{eq:synthetic:table} on a true log grid (left), first-order
+    NQT grid (center), and second-order NQT grid (right). The x-axis
+    is density and the y-axis is the relative error in pressure. On average
+    (in the $L_1$ sense), all interpolants converge at second order,
+    but error spikes near the control points of the NQT gridding
+    converge more slowly. The result is that first-order NQT converges
+    at second order in the $L_1$ norm but slower in the $L_p$ norm for
+    $p>1$. In second-order NQT the spikes also converge at
+    second-order, recovering second-order convergence in higher $p$
+    $L_p$ norms. In all three figures, a dashed horizontal line shows
+    the expected magnitude for second-order convergence.}
     \label{fig:faketable}  
 \end{figure*}
+\end{nolinenumbers}
 
 \citet{NQTo1} recognized that a transformation need not be logarithmic and introduced a family of exactly invertible functions that they called \textit{not-quite-transcendental} (NQT). These functions leverage the underlying structure of floating point numbers to construct highly performant almost-logarithmic functions. \citet{NQTo1} argued that these functions were drop-in replacements for normal logarithms in a wide variety of contexts, with no loss in accuracy. 
 
@@ -209,19 +220,21 @@ Unfortunately, the original NQT functions are exactly invertible, but they do in
 
 This paper is organized as follows. In Section \ref{sec:NQTo1}, we review first-order NQT functions and describe why the original claim of \citet{NQTo1} that they imply zero loss in accuracy was incorrect. In Section \ref{sec:NQTo2}, we introduce second-order NQT functions and discuss why they cure the issues of the first-order version. In Section \ref{sec:numexperiments} we demonstrate the efficacy of NQTo2 methods in a suite of test problems. Finally in Section \ref{sec:outlook} we conclude our discussion. Appendix \ref{sec:integer:aliasing} discusses how to implement performant versions of the NQT method, which requires understanding the bit-level representation of floating point numbers.
 
+\begin{nolinenumbers}
 \begin{figure*}[tb]
     \centering
     \includegraphics[width=0.99\textwidth]{figures/nqt_speedups.pdf}
-    \caption{Ratio of performance of standard library provided functions to their NQT counterparts. Bigger is better. Left column is the portable implementation that uses {\tt frexp} and {\tt ldexp} and right column is the integer aliased implementation described in Appendix \ref{sec:integer:aliasing}. Top row is first-order NQT and bottom row is second-order NQT. In the architecture lists, {\tt \_intel} implies the intel compiler was used. On CPU systems, the gnu compiler was otherwise used and on GPU systems the relevant vendor-provided compiler (here CUDA) was used. {\tt spr} stands for Sapphire Rapids.}
+    \caption{Ratio of performance of standard library provided functions to their NQT counterparts. Bigger is better. Left column is the portable implementation that uses {\tt frexp} and {\tt ldexp} and right column is the integer aliased implementation described in Appendix \ref{sec:integer:aliasing}. Top row is first-order NQT and bottom row is second-order NQT. In the architecture lists, {\tt \_intel} implies the intel compiler was used. On CPU systems, the gnu compiler was otherwise used and on GPU systems the relevant vendor-provided compiler (here CUDA) was used. {\tt spr} stands for Sapphire Rapids. The code was built with the compilation flags inserted by the CMake build system for release mode, which is typically {\tt -O2} and {\tt -march=native}. {\tt -std=c++17} is also required. For CUDA builds, we also use {\tt --expt-relaxed-constexpr -extended-lambda -Wext-lambda-captures-this}. The software versions used are: gcc 12.3.0, CUDA 12.5.0, and intel 2024.}
     %\jf{This plot is hard to read at this scale.} \jmm{Made this a figure*}}
     \label{fig:NQT:comp}
 \end{figure*}
+\end{nolinenumbers}
 
 \section{First-order not-quite-transcendental functions}
 \label{sec:NQTo1}
 
 A positive floating point number $n$ can be
-represented as
+represented as\footnote{Without loss of generality, we specialize to double precision numbers throughout this manuscript and, unless otherwise specified, all tests are in double precision.}
 \begin{equation}
     \label{eq:float:representation}
     n = m \times 2^{p},
@@ -250,22 +263,29 @@ which is the piecewise linear interpolant of $\lg(x)$ with control points at pow
 Definition \eqref{eq:def:lg:NQT:o1} is everywhere continuous, but only piecewise $C^1$, as the derivative is discontinuous at the control points, powers of 2. When this transformation is applied to smooth data, the resulting function, which must then be interpolated, also becomes merely piecewise $C^1$. Unfortunately, second order convergence of linear interpolation is only guaranteed for everywhere $C^1$ functions.
 
 The consequences of this non-smoothness are shown in the central panel of Figure \ref{fig:faketable}. We create a fake table of the form
-$$P = 1 + \rho + K_1 \rho^\Gamma_1 + K_2 \rho^\Gamma_2$$
+\begin{equation}
+  \label{eq:synthetic:table}
+  P = 1 + \rho + K_1 \rho^\Gamma_1 + K_2 \rho^\Gamma_2
+\end{equation}
 and interpolate it with linear interpolation on a log-log grid and on a NQTo1-NQTo1 grid. The former is shown on the left pane, the latter in the center. On average (in the $L_1$ sense), both interpolants converge at second order. However, error spikes near the control points of the NQT gridding converge more slowly. The result is that first-order NQT converges at order in the $L_1$ norm but slower in the $L_p$ norm for $p>1$.
 
+\begin{nolinenumbers}
 \begin{figure*}[p!]
     \centering
     \includegraphics[width=0.75\linewidth]{figures/stellarcollapsecomp.png}
     \caption{Interpolation of the SFHo EOS \citep{SFHoEOS} as tabulated in the Stellar Collapse database \citep{stellarcollapsetables}. Left column is the true table, middle is first-order NQT, and right is second-order. Left column shows pressure vs density and temperature at fixed $Y_e=0.1.$ Middle and right columns show relative error compared to the true log interpolant.}
     \label{fig:SFHo}
 \end{figure*}
+\end{nolinenumbers}
 
+\begin{nolinenumbers}
 \begin{figure*}[p!]
     \centering
     \includegraphics[width=0.99\linewidth]{figures/sescomp.png}
     \caption{Interpolation of the tabulated equation of state for Copper in the Sesame database \citep{sesame,Peterson2012CopperEOS}. Left column is the fifth-order rational function interpolant produced by the EOSPAC library \citep{PimentelDavidA2021EUMV}, which we treat as ground truth. Middle two columns show errors from first- and second-order NQT interpolation respectively, while rightmost column shows error from true log interpolation.}
     \label{fig:copper}
 \end{figure*}
+\end{nolinenumbers}
 
 \section{Second-order not-quite-transcendental functions}
 \label{sec:NQTo2}
@@ -311,31 +331,35 @@ Most programming languages provide facilities to split a floating point number i
 \subsection{Isolated performance}
 \label{sec:experiment:performance}
 
-To measure the performance of NQT functions compared to their transcendental counterparts, we implement performance portable versions of first- and second-order NQT logarithm and exponent in the Kokkos framework \citep{Kokkos}.\footnote{This implementation is available online at \url{https://github.com/lanl/not-quite-transcendental}.}
+To measure the performance of NQT functions compared to their transcendental counterparts, we implement performance portable versions of first- and second-order NQT logarithm and exponent in the Kokkos framework \citep{Kokkos}.\footnote{This implementation is available online at \url{https://github.com/lanl/not-quite-transcendental}. A snapshot of the codebase can be found at \citet{NQTRepoZenodo}.}
 
 Figure \ref{fig:NQT:comp} compares timings for first- and second-order NQT methods for logarithm and exponential vs their transcendental counterparts across a variety of architectures including intel, AMD, and ARM CPUs as well as NVIDIA GPUs. Broadly, NQT methods are faster than transcendental methods, and the integer aliased methods are faster than the portable ones. Speedups for the second-order method are more modest than for first order. However, especially with the integer-aliased versions, 2x or greater speedups are achievable, even for the second-order NQT method.
 
 Architecturally, speedups are more modest for GPU architectures than for x86-CPUs, likely because GPUs are memory bandwidth, not flop, limited. ARM64-based architectures sometimes indicate slowdowns rather than speedups (although the slowdowns are mild). This is likely due to the fact that ARM64 provides a hardware intrinsic for logarithms and exponentials, while x86 does not.
 %This suggests that NQT functions are potentially only a win for x86 and GPU architectures, not ARM64. \jf{We should qualify this statement more carefully. AthenaK sees rather significant speedups on the Grace ARM CPU on Vista when using NQTs.} \jmm{Fair point. I'm fine just removing this statement.}
 
+\begin{nolinenumbers}
 \begin{figure}[tb]
     \centering
     \includegraphics[width=0.9\columnwidth]{figures/athenaknsvolume.png}
     \caption{Density slice of a three-dimensional neutron star simulated with AthenaK with logarithmic interpolation on the left and second-order NQT on the right.}
     \label{fig:TOV:rho}
 \end{figure}
+\end{nolinenumbers}
 
 \subsection{EOS lookups}
 \label{sec:lookups}
 
 To evaluate NQT methods integrated in table interpolation, we implement the integer-aliased versions of first- and second-order NQT methods inside the performance portable equation of state library {\tt Singularity-EOS} \citep{singularityeos}. Interpolation on device is efficated by the performance portable interpoaltion library, {\tt Spiner} \citep{Spiner}.
 
+\begin{nolinenumbers}
 \begin{figure}[tb]
     \centering
     \includegraphics[width=0.99\columnwidth]{figures/athenak_speedups.pdf}
     \caption{Integrated performance data comparing logarithmic with first- and second-order NQT interpolation in an AthenaK simulation of an isolated neutron star on various architectures. Speedups are with respect to logarithmic interpolation. Broadly NQTo2 always provides a speedup in integrated runtime, though smaller than NQTo1. The largest speedup for NQTo2 is about 30\% on an RTX 3070. Performance is measured by recording the total number of zone-cycles/wallsecond in each calculation.}
     \label{fig:TOV:perf}
 \end{figure}
+\end{nolinenumbers}
 
 Figure \ref{fig:SFHo} shows interpolation of the SFHo \citep{SFHoEOS} equation of state as tabulated in the Stellar Collapse format \cite{stellarcollapsetables}. Particularly at low densities, the relative error for the second-order NQT is significantly reduced compared to first-order NQT, to the point that they are essentially indistinguishable. 
 
@@ -349,6 +373,7 @@ In these experiments we find the integrated second-order NQT method to be about 
 Finally as an integrated demonstration, we run simulations of an isolated neutron star, constructed using Tolman-Oppenheimer-Volkoff initial conditions \citep{Tolman1, Tolman2, TOV3} with a tabulated SFHo equation of state \citep{SFHoEOS}. These simulations are performed in the performance portable numerical relativity code AthenaK \citep{StoneAthenaKBase, Zhu24AthenaKNR, Fields24BNS}. A density slice is shown in Figure \ref{fig:TOV:rho}. Broadly results are similar. The eigenfrequencies of oscillations of an isolated neutron star depend sensitively on the equation of state, however, and we have not yet explored the density of table required for the NQTo2 and logarithmic tables to produce eiqenspectra that agree. 
 %\jf{We should mention a caveat here in case a referee asks: though the two sides of the density plot appear very similar, the O2 NQTs do slightly change the equation of state as suggested by Figures~\ref{fig:SFHo} and \ref{fig:copper}. Though not shown due to the limited integration time, initializing the NQT TOV evolution with a log-spaced table (as will need to be done for most existing initial data libraries) induces stronger oscillations in the central density and suggests that there may be some  differences in the oscillation frequencies.} \jmm{How's that?}
 
+\begin{nolinenumbers}
 \begin{figure}[t!]
     \begin{center}
     \resizebox{0.99\columnwidth}{!}{
@@ -373,8 +398,31 @@ Finally as an integrated demonstration, we run simulations of an isolated neutro
     \caption{Structure of a big-endian double precision floating point number under the IEEE754 standard.}
     \label{fig:bits}
 \end{figure}
+\end{nolinenumbers}
 
 Performance data comparing logarithmic to first- and second-order NQT interpolation is shown in Figure \ref{fig:TOV:perf}. Improvements for second-order NQT are more modest than for first-order, but still are as large as approximately 30\%, a significant improvement. AthenaK makes many equation of state calls per cycle due to the conserved to primitive solver and first-order flux correction algorithm utilized, which may explain the large speedups.
+
+\subsection{A note on single- vs double- precision}
+\label{sec:single:double}
+
+\begin{deluxetable}{lccc}
+
+\tablecaption{Speedups for Single vs.\ Double Precision\label{tab:speedups}}
+
+\tablehead{
+    \colhead{Function} & \colhead{true (\%)} & \colhead{NQT$_1$ (\%)} & \colhead{NQT$_2$ (\%)}
+}
+
+\startdata
+lg & 134.4 & 103.5 & 189.7 \\ % 134.37 & 103.463 & 189.698 
+exp2 & 34.0 & 98.5 & 10.7 \\ % 33.9571 & 98.4841 & 10.7148
+\enddata
+
+\tablecomments{Speedups of single precision over double precision for lg and exp2 for true logs and exponents, NQT$_1$, and NQT$_2$. This experiment was performed on an Intel i7-13700H (Raptor Lake), and compiled using gcc 12.3.0 with the \texttt{-O3 -march=native} optimization flags.}
+
+\end{deluxetable}
+
+We note that while the above experiments are performed in double precision, larger speedups are possible by leveraging single precision, should the data to be interpolated tolerate the reduced precision. Table \ref{tab:speedups} shows the speedup of logarithm and exponentiation for single versus double precision using standard logs/exponentials, and NQT algorithms at both first- and second-order. We see the expected speedup using the simplest algorithm, NQT$_1$, at about 100\%, reflecting the additional space and bandwidth available at reduced precision. As both true logs and NQT$_2$ rely on more than simple arithmetic functions, the speedups are less simple, however in both cases we see a significant improvement in lg-performance, and less of an improvement in exp-performance. We further note that GPUs often have performance boosts for reduced precision that significantly outpace the expected 2x improvement. Therefore further improvements are possible.
 
 \section{Outlook}
 \label{sec:outlook}
@@ -383,13 +431,19 @@ To summarize, we have developed a novel set of functions that satisfy many of th
 
 We have demonstrated in a series of experiments the efficacy of these NQT functions for the interpolation of tabulated equation of state data, such as finite temperature nuclear equations of state, suitable for core-collapse supernova and neutron star merger simulations, and terrestrial equations of state, suitable for planet and moon formation and planetary defense. 
 
-This functionality has been implemented in the open source {\tt singularity-EOS} \citep{singularityeos} library and {\tt AthenaK} \citep{StoneAthenaKBase,Zhu21DustOpacity,Fields24BNS} and Phoebus \citep{Phoebus} numerical relativity codes, where it is now in use. While a portable implementation is possible, to squeeze the most performance out of the method, a lower-level, integer aliased approach is required. Reference implementations are available at \url{https://github.com/lanl/not-quite-transcendental}. 
+This functionality has been implemented in the open source {\tt singularity-EOS} \citep{singularityeos} library and {\tt AthenaK} \citep{StoneAthenaKBase,Zhu21DustOpacity,Fields24BNS} and Phoebus \citep{Phoebus} numerical relativity codes, where it is now in use. While a portable implementation is possible, to squeeze the most performance out of the method, a lower-level, integer aliased approach is required. Reference implementations are available in a living repository at \url{https://github.com/lanl/not-quite-transcendental} and a snapshot is available at \citet{NQTRepoZenodo}.
 
-Swapping out the logarithm can have a significant impact on performance. In AthenaK, we found that replacing the logarithm with NQTo2 in equation of state interpolation resulted in as high as a 30\% speedup in the total integrated calculation. This speaks to the large fraction of time that a numerical relativity simulation may spend in equation of state physics. There are still gains to be had in low-level optimizations such as this one.
+Swapping out the logarithm and exponent can have a significant impact on performance. In AthenaK, we found that replacing the logarithm with NQTo2 in equation of state interpolation resulted in as high as a 30\% speedup in the total integrated calculation. This speaks to the large fraction of time that a numerical relativity simulation may spend in equation of state physics. There are still gains to be had in low-level optimizations such as this one.
 
 \begin{acknowledgments}
-The authors thank Luke Roberts, Josh Dolence, Patrick Mullen, Jeff Peterson, and Daniel Holladay for many useful discussions. PH and JMF acknowledge funding from the National Science Foundation under Grant No.~PHY-2116686. This research was supported by funding from the U.S. Department of Energy, Office of Science, Division of Nuclear Physics under Award Number DE-SC0021177. JMM was supported by the ASC M$^3$AP and XCAP projects in Advanced Simulation and Computing (ASC) program the at Los Alamos National Laboratory (LANL). 
+% JF: I made the following updates to the acknowledgments on 1/15/25:
+% 1. Acknowledgments for all the computing resources used by JF were added.
+% 2. The NSF grant is for NP3M, which only funds PH. JF is supported by the DOE grant that follows.
+The authors thank Luke Roberts, Josh Dolence, Patrick Mullen, Jeff Peterson, and Daniel Holladay for many useful discussions. PH acknowledges funding from the National Science Foundation under Grant No.~PHY-2116686. JF was supported by funding from the U.S. Department of Energy, Office of Science, Division of Nuclear Physics under Award Number DE-SC0021177. JMM was supported by the ASC M$^3$AP and XCAP projects in Advanced Simulation and Computing (ASC) program the at Los Alamos National Laboratory (LANL). 
 BLB acknowledges support from the ASC Program of LANL as a Metropolis Postdoctoral Fellow.
+
+This research used resources of the National Energy Research Scientific Computing Center, a DOE Office of Science User Facility supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC0205CH11231. This research used resources of the Oak Ridge Leadership Computing Facility at the Oak Ridge National Laboratory, which is supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC05-00OR22725. This research also used resources on the Frontera and Vista machines of the Texas Advanced Computing Center (NSF LRAC allocation PHY23001).
+
 LANL is operated by Triad National Security, LLC, for the National Nuclear Security Administration of U.S. Department of Energy (Contract No. 89233218CNA000001). This work is cleared for unlimited release under LA-UR-25-20182.
 \end{acknowledgments}
 
@@ -422,7 +476,7 @@ In this section, we discuss the \textit{integer aliasing} strategy required to i
 \label{sec:floats}
 
 The following discussion assumes a big-endian\footnote{That is to say the most significant bit is at the smallest memory address and the least significant bit at the largest.} implementation of the IEEE754 standard \citep{IEEE754-2019} for double precision numbers. However, it may be generalized to other precisions and other endianness straightforwardly.
-Figure \ref{fig:bits} shows the structure of an IEEE754 number, which encodes equation \eqref{eq:float:representation}. Each box is a bit. The leading bit (at the lowest memory address) is the sign bit. The next 11 bits, $e$, are the exponent, represented as a biased integer in base 2, such as $p$ in equation \eqref{eq:float:representation}, where $p$ is given by $p=1-1023$. The remaining 52 bits represent the mantissa, again in base 2. The bits stored represent the number $0.b$, howver the IEEE754 calls for a leading 1, so the value is represented as 1.b$, which exists on the interval $[1,2)$. To recover $m\in [1/2, 1)$, we use $m=(1+b)/2)$. The mantissa and exponent may thus be extracted from the original number by appropriate masking of the bits. For example, to extract the mantissa $b$ of 64 bit floating point number $n$, one may use 
+Figure \ref{fig:bits} shows the structure of an IEEE754 number, which encodes equation \eqref{eq:float:representation}. Each box is a bit. The leading bit (at the lowest memory address) is the sign bit. The next 11 bits, $e$, are the exponent, represented as a biased integer in base 2, such as $p$ in equation \eqref{eq:float:representation}, where $p$ is given by $p=1-1023$. The remaining 52 bits represent the mantissa, again in base 2. The bits stored represent the number $0.b$, howver the IEEE754 calls for a leading 1, so the value is represented as $1.b$, which exists on the interval $[1,2)$. To recover $m\in [1/2, 1)$, we use $m=(1+b)/2)$. The mantissa and exponent may thus be extracted from the original number by appropriate masking of the bits. For example, to extract the mantissa $b$ of 64 bit floating point number $n$, one may use 
 \begin{equation}
     \label{eq:mantissa:mask}
     m = (2^{52} - 1)\ \&\ n
@@ -437,7 +491,8 @@ where equation \eqref{eq:mantissa:mask} selects for the trailing 52 bits and equ
 \subsection{Classic integer aliasing}
 \label{sec:bithack:classic}
 
-Because the leading order bits in the number represent the exponent, the total collection of bits reinterpreted as an integer scales roughly as the logarithm of the original floating point number. To be useful as a floating point number, the resultant integer must then be typecast back to its original type and then shifted and scaled, as shown below:
+Because the leading order bits in the number represent the exponent, the total collection of bits reinterpreted as an integer scales roughly as the logarithm of the original floating point number. To be useful as a floating point number, the resultant integer must then be typecast back to its original type and then shifted and scaled, as shown below:\footnote{We note this algorithm does not properly handle denormalized numbers.}
+\begin{nolinenumbers}
 \begin{lstlisting}[caption={The basic integer-aliased NQTo1 log}, label={lst:nqto1}]
 inline auto as_int(double f) {
   return *reinterpret_cast<std::int64_t*>(&f);
@@ -453,15 +508,18 @@ inline double lg_o1_aliased(const double x) {
   return static_cast<double>(as_int(x) - one_as_int) * scale_down;
 }
 \end{lstlisting}
+\end{nolinenumbers}
 This observation, made by \citet{Blinn}, is the core idea of \textit{integer aliasing}. Indeed it turns out the resultant function is exactly the first-order NQT $\lg$ defined in equation \eqref{eq:def:lg:NQT:o1}. Incidentally it is also the 64 bit generalization of the first part of the infamous Quake 3 fast inverse square root \citep{fastinvqrt,WizardryOfId}. The magic numbers from that algorithm can be mapped to the {\tt one\_as\_int} and {\tt scale\_down} numbers in Listing \ref{lst:nqto1}.
 
 \subsection{Integer aliasing for second-order NQT methods}
 \label{sec:aliasing:NQT:o2}
 
 Integer aliasing for the second-order NQT method proceeds by picking out the mantissa and exponent as in equations \eqref{eq:mantissa:mask} and \eqref{eq:exponent:mask} and then using equation \eqref{eq:def:lg:NQT:o2}. To accelerate calculation, one may perform the arithmetic operations required, such as squaring the mantissa, while treating it as an integer, as shown below:
+\begin{nolinenumbers}
 \begin{lstlisting}[caption={The integer-aliased NQTo2 log}, label={lst:nqto2}]
 inline double lg_o2_aliased(const double x) {
   // picks out the mantissa
+  constexpr std::int64_t one = 1;
   constexpr std::int64_t mantissa_mask = (one << 52) - one;
   // picks out the least significant 26 bits
   constexpr std::int64_t low_mask = (one << 26) - 1;
@@ -478,6 +536,7 @@ inline double lg_o2_aliased(const double x) {
   return static_cast<double>(x_as_int + ((m_as_int - m_squared) / 3)) * scale_down;
 }
 \end{lstlisting}
+\end{nolinenumbers}
 Doing so will drop the least significant bits of the logarithm, however.
 
 \bibliography{refs}{}

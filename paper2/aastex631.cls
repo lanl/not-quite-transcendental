@@ -2189,7 +2189,7 @@ width0pt\relax#1$}\ignorespaces}
 
 
 %% for tables continuing over pages
-\usepackage{longtable}
+%\usepackage{longtable}
 
 %% for editing changes
 \usepackage{xcolor}
