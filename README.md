@@ -5,13 +5,15 @@ Reference Implementations of Not-Quite-Transcendental Functions
 
 ## Introduction
 
-This is the companion repository for [ArXiv:2206.08957](https://arxiv.org/abs/2206.08957). 
-Here we present
+This is the companion repository for
+[ArXiv:2206.08957](https://arxiv.org/abs/2206.08957) and
+[ArXiv:2501.05410](https://arxiv.org/abs/2501.05410). Here we present
 the reference impementations for not-quite-transendental functions as
-well as machinery to time them. For completeness, we also include the
-paper in TeX in the paper subdirectory. The logarithms are in
-`src/logs.hpp`, where we include a portable version as well as a very
-performant version based on integer aliasing.
+well as machinery to time them. For completeness, we also include
+ArXiv:2206.08957 in TeX in the paper subdirectory and ArXiv:2501.05410
+in the paper2 subdirectory. The logarithms are in `src/logs.hpp`,
+where we include a portable version as well as a very performant
+version based on integer aliasing.
 
 ## Dependencies
 
